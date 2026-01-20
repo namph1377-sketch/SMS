@@ -1,0 +1,6 @@
+{
+    "user": "root",
+    "password": "Điền vào mật khẩu MySQL",
+    "host": "localhost",
+    "database": "Tên DB bạn tạo"
+}
