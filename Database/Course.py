@@ -8,7 +8,7 @@ class Course:
 
     @staticmethod
     def get_all_information(db):
-        sql = """
+        query = """
         SELECT
           co.CourseID,
           co.CourseTime,
@@ -29,7 +29,7 @@ class Course:
         LEFT JOIN `User` u ON a.userID = u.userID
         ORDER BY co.CourseID
         """
-        rows = db.fetch_all(sql)
+        rows = db.fetch_all(query)
 
         # Group rows by CourseID
         courses = {}
@@ -61,5 +61,4 @@ class Course:
                 }
                 courses[course_id]["participants"].append(user_obj)
 
-        # Return list
         return list(courses.values())
