@@ -5,7 +5,7 @@ class Contain:
 
     @staticmethod
     def get_all_curriculum_information(db):
-        sql = """
+        query = """
         SELECT
           c.curriculumID,
           cur.semester,
@@ -16,7 +16,7 @@ class Contain:
         JOIN Curriculum cur ON c.curriculumID = cur.curriculumID
         JOIN Subject s ON c.subjectID = s.subjectID
         """
-        rows = db.fetch_all(sql)
+        rows = db.fetch_all(query)
 
         result = []
         for r in rows:
