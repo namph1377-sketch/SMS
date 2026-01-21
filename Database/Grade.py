@@ -1,4 +1,3 @@
-# Grade.py
 class Grade:
     def __init__(
         self,
@@ -25,7 +24,7 @@ class Grade:
         self.Notes = Notes
 
     def add_grade(self, db):
-        sql = """
+        query = """
         INSERT INTO Grade
         (CourseID, userID, CAscore, Finalscore, FinalGrade, GPA, LetterGrade, classification, Pass, Notes)
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
@@ -42,10 +41,10 @@ class Grade:
             self.Pass,
             self.Notes,
         )
-        return db.execute_query(sql, params)
+        return db.execute_query(query, params)
 
     def update_grade(self, db):
-        sql = """
+        query = """
         UPDATE Grade SET
           CAscore=%s,
           Finalscore=%s,
@@ -69,7 +68,7 @@ class Grade:
             self.CourseID,
             self.userID,
         )
-        return db.execute_query(sql, params)
+        return db.execute_query(query, params)
 
     @staticmethod
     def get_all_information(db):
@@ -77,7 +76,7 @@ class Grade:
         Dùng lệnh JOIN giữa các bảng:
         Grade + Course + Subject + User
         """
-        sql = """
+        query = """
         SELECT
           g.CourseID,
           c.CourseTime,
@@ -102,7 +101,7 @@ class Grade:
         JOIN Subject s ON c.subjectID = s.subjectID
         JOIN `User` u ON g.userID = u.userID
         """
-        rows = db.fetch_all(sql)
+        rows = db.fetch_all(query)
 
         result = []
         for r in rows:
