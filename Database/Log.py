@@ -8,6 +8,6 @@ class Log:
         self.userID = userID
 
     def add_log(self, db):
-        sql = "INSERT INTO `Log` (LogID, LogType, LogObject, OldValue, ChangeAt, userID) VALUES (%s,%s,%s,%s,%s,%s)"
-        return db.execute_query(sql, (self.LogID, self.LogType, self.LogObject, self.OldValue, self.ChangeAt, self.userID))
+        query = "INSERT INTO `Log` (LogID, LogType, LogObject, OldValue, ChangeAt, userID) VALUES (%s,%s,%s,%s,%s,%s)"
+        return db.execute_query(query, (self.LogID, self.LogType, self.LogObject, self.OldValue, self.ChangeAt, self.userID))
         
