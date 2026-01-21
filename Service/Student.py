@@ -10,7 +10,6 @@ from datetime import datetime
 
 
 class Student:
-    # Hàm khởi tạo
     def __init__(self, user_id):
         self.db = Database()
         self.user = User(self.db)
@@ -23,7 +22,6 @@ class Student:
         self.user_id = user_id
         self.student_id = self.user.get_student_id(user_id)
 
-    # 1. Xem hồ sơ cá nhân
     def viewProfile(self):
         return self.profile.get_by_student_id(self.student_id)
 
@@ -50,8 +48,6 @@ class Student:
             )
         return success
 
-
-    # 3. Xem chương trình đào tạo
     def viewCurriculum(self):
         profile = self.profile.get_by_student_id(self.student_id)
         if not profile:
@@ -62,12 +58,10 @@ class Student:
             profile.get("education_level")
         )
 
-    # 4. Xem điểm
     def viewGrade(self):
         return self.grade.get_by_student_id(self.student_id)
 
 
-    # 5. Xem thời khóa biểu
     def ViewSchedule(self):
         return self.contain.get_schedule_by_student_id(self.student_id)
 
