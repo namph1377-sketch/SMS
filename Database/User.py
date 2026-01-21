@@ -43,7 +43,7 @@ class User:
 
 
     def add_user(self, db):
-        sql = """
+        query = """
         INSERT INTO `User`
         (userID, username, password, email, Role, isActive, fullName, dateofBirth,
          educationLevel, educationType, status, Admissiondate, Specialization, courseYear,
@@ -71,10 +71,10 @@ class User:
             self.curriculumID,
             self.CourseID,
         )
-        return db.execute_query(sql, params)
+        return db.execute_query(query, params)
 
     def update_user(self, db):
-        sql = """
+        query = """
         UPDATE `User` SET
           username=%s,
           password=%s,
@@ -113,12 +113,12 @@ class User:
             self.CourseID,
             self.userID,
         )
-        return db.execute_query(sql, params)
+        return db.execute_query(query, params)
 
     @staticmethod
     def delete_user(db, userID):
-        sql = "DELETE FROM `User` WHERE userID=%s"
-        return db.execute_query(sql, (userID,))
+        query = "DELETE FROM `User` WHERE userID=%s"
+        return db.execute_query(query, (userID,))
 
     # ------------- AUTH / ACCOUNT -------------
     @staticmethod
@@ -127,7 +127,7 @@ class User:
         Lấy thông tin user theo email (email là UNIQUE trong DB)
         Trả về dict hoặc None
         """
-        sql = """
+        query = """
         SELECT
           userID, username, password, email, Role, isActive, fullName, dateofBirth,
           educationLevel, educationType, status, Admissiondate, Specialization, courseYear,
@@ -135,7 +135,7 @@ class User:
         FROM `User`
         WHERE email=%s
         """
-        row = db.fetch_one(sql, (email,))
+        row = db.fetch_one(query, (email,))
         if not row:
             return None
 
@@ -165,8 +165,8 @@ class User:
         Cập nhật password theo email
         new_hashed_password: mật khẩu đã được hash ở tầng service/controller
         """
-        sql = "UPDATE `User` SET password=%s WHERE email=%s"
-        return db.execute_query(sql, (new_hashed_password, email))
+        query = "UPDATE `User` SET password=%s WHERE email=%s"
+        return db.execute_query(query, (new_hashed_password, email))
 
     # ------------- Searches & joins -------------
     @staticmethod
@@ -175,12 +175,12 @@ class User:
         Ngoài những thông tin cơ bản cần Select,
         Hãy lấy thêm những thông tin sau: role, is_active
         """
-        sql = """
+        query = """
         SELECT userID, username, fullName, email, Role, isActive, dateofBirth, ClassID, curriculumID, CourseID
         FROM `User`
         WHERE userID = %s
         """
-        r = db.fetch_one(sql, (userID,))
+        r = db.fetch_one(query, (userID,))
         if not r:
             return None
 
@@ -199,12 +199,12 @@ class User:
 
     @staticmethod
     def search_user_by_Name(db, fullName):
-        sql = """
+        query = """
         SELECT userID, username, fullName, email, Role, isActive, dateofBirth, ClassID, curriculumID, CourseID
         FROM `User`
         WHERE fullName LIKE %s
         """
-        rows = db.fetch_all(sql, (f"%{fullName}%",))
+        rows = db.fetch_all(query, (f"%{fullName}%",))
         result = []
         for r in rows:
             result.append({
@@ -277,7 +277,7 @@ class User:
         """
         Dùng lệnh "join" giữa các bảng
         """
-        sql = """
+        query = """
         SELECT
           u.userID, u.username, u.fullName, u.email, u.Role, u.isActive,
           c.ClassID, c.ClassName,
@@ -290,7 +290,7 @@ class User:
         LEFT JOIN Department d ON m.departmentID = d.departmentID
         LEFT JOIN StudentProfile sp ON u.userID = sp.userID
         """
-        rows = db.fetch_all(sql)
+        rows = db.fetch_all(query)
         result = []
         for r in rows:
             result.append({
