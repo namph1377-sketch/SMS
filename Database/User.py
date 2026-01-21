@@ -173,7 +173,7 @@ class User:
     def search_user_by_ID(db, userID):
         """
         Ngoài những thông tin cơ bản cần Select,
-        Hãy lấy thêm những thông tin sau: role, is_active
+        Hãy lấy thêm những thông tin sau: Role, isActive
         """
         query = """
         SELECT userID, username, fullName, email, Role, isActive, dateofBirth, ClassID, curriculumID, CourseID
@@ -189,8 +189,8 @@ class User:
             "username": r[1],
             "fullName": r[2],
             "email": r[3],
-            "role": r[4],
-            "is_active": r[5],
+            "Role": r[4],
+            "isActive": r[5],
             "dateofBirth": r[6],
             "ClassID": r[7],
             "curriculumID": r[8],
@@ -212,8 +212,8 @@ class User:
                 "username": r[1],
                 "fullName": r[2],
                 "email": r[3],
-                "role": r[4],
-                "is_active": r[5],
+                "Role": r[4],
+                "isActive": r[5],
                 "dateofBirth": r[6],
                 "ClassID": r[7],
                 "curriculumID": r[8],
@@ -263,8 +263,8 @@ class User:
                 "username": r[1],
                 "fullName": r[2],
                 "email": r[3],
-                "role": r[4],
-                "is_active": r[5],
+                "Role": r[4],
+                "isActive": r[5],
                 "class": {"ClassID": r[6], "ClassName": r[7]},
                 "major": {"MajorID": r[8], "MajorName": r[9]},
                 "department": {"departmentID": r[10], "DepartmentName": r[11]},
@@ -298,8 +298,8 @@ class User:
                 "username": r[1],
                 "fullName": r[2],
                 "email": r[3],
-                "role": r[4],
-                "is_active": r[5],
+                "Role": r[4],
+                "isActive": r[5],
                 "class": {"ClassID": r[6], "ClassName": r[7]},
                 "major": {"MajorID": r[8], "MajorName": r[9]},
                 "department": {"departmentID": r[10], "DepartmentName": r[11]},
