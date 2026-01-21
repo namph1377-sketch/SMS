@@ -1,4 +1,6 @@
 class Major:
-    # Ở hàm __init__: Nhập vào các thuộc tính của bảng Major trong data model
-    def __init__(self, MajorID, ):
-        pass
+    def __init__(self, MajorID, MajorName, curriculumID, departmentID):
+        self.MajorID = MajorID
+        self.MajorName = MajorName
+        self.curriculumID = curriculumID
+        self.departmentID = departmentID
