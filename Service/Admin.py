@@ -258,6 +258,7 @@ class Admin:
                     info.status,
                     current_user
                 )
+                self.deactiveAccount(updated)
 
             if info.email != updated.email:
                 self.log(
