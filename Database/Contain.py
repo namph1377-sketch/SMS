@@ -1,11 +1,34 @@
 class Contain:
-    # Ở hàm __init__: Nhập vào các thuộc tính của bảng Contain trong data model
-    def __init__(self, CurriculumID, ):
-        pass
+    def __init__(self, curriculumID, subjectID):
+        self.curriculumID = curriculumID
+        self.subjectID = subjectID
 
     @staticmethod
     def get_all_curriculum_information(db):
+        sql = """
+        SELECT
+          c.curriculumID,
+          cur.semester,
+          s.subjectID,
+          s.subjectName,
+          s.Credits
+        FROM Contain c
+        JOIN Curriculum cur ON c.curriculumID = cur.curriculumID
+        JOIN Subject s ON c.subjectID = s.subjectID
         """
-        Dùng lệnh "join" giữa các bảng
-        """
-        pass
+        rows = db.fetch_all(sql)
+
+        result = []
+        for r in rows:
+            result.append({
+                "curriculum": {
+                    "curriculumID": r[0],
+                    "semester": r[1],
+                },
+                "subject": {
+                    "subjectID": r[2],
+                    "subjectName": r[3],
+                    "Credits": r[4],
+                }
+            })
+        return result
