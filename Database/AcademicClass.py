@@ -1,4 +1,5 @@
 class AcademicClass:
-    # Ở hàm __init__: Nhập vào các thuộc tính của bảng AcademicClass trong data model
-    def __init__(self, ClassID, ClassName):
-        pass
+    def __init__(self, ClassID, ClassName, MajorID):
+        self.ClassID = ClassID
+        self.ClassName = ClassName
+        self.MajorID = MajorID
