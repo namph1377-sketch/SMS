@@ -1,4 +1,4 @@
 class Department:
-    # Ở hàm __init__: Nhập vào các thuộc tính của bảng Department trong data model
-    def __init__(self, DepartmentID, ):
-        pass
+    def __init__(self, departmentID, DepartmentName):
+        self.departmentID = departmentID
+        self.DepartmentName = DepartmentName
