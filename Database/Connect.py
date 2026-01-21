@@ -2,28 +2,43 @@ import mysql.connector
 import json
 
 class Database:
-    def __init__(self):
-        """
-            Câu lệnh mở "Access.jon"
-        """
-        pass
+    def __init__(self, config_path: str = "Access.json"):
+        with open(config_path, "r", encoding="utf-8") as f:
+            config = json.load(f)
 
-    #Hàm thực thi yêu cầu với MySQL
-    def execute_query(self, query, params=None):
+        self.conn = mysql.connector.connect(**config)
 
-        # Return True/False
-        
-        pass
-    
-    # Hàm lấy 1 object trong 1 bảng
-    def fetch_one(self, query, params=None):
+    def close(self):
+        try:
+            if self.conn.is_connected():
+                self.conn.close()
+        except Exception:
+            pass
 
-        # Return hàm fetchone() trong thư viện mysql
-        pass
+    def execute(self, query: str, params=None) -> int:
+        cur = self.conn.cursor()
+        try:
+            cur.execute(query, params)
+            self.conn.commit()
+            return cur.rowcount
+        except Exception:
+            self.conn.rollback()
+            raise
+        finally:
+            cur.close()
 
-    # Hàm lất toàn bộ object trong 1 bảng
-    def fetch_all(self, query, params=None):
+    def fetch_one(self, query: str, params=None):
+        cur = self.conn.cursor()
+        try:
+            cur.execute(query, params)
+            return cur.fetchone()
+        finally:
+            cur.close()
 
-        # Return hàm fetchall() trong thư viện mysql
-
-        pass
+    def fetch_all(self, query: str, params=None):
+        cur = self.conn.cursor()
+        try:
+            cur.execute(query, params)
+            return cur.fetchall()
+        finally:
+            cur.close()
