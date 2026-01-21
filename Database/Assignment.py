@@ -1,4 +1,3 @@
-
 class Assignment:
     def __init__(self, CourseID, userID):
         self.CourseID = CourseID
