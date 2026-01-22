@@ -4,7 +4,7 @@ from Database.Assignment import Assignment
 from UI.Auth_UI import UIAuth
 
 
-class TeacherUI:
+class Teacher_UI:
     def __init__(self):
         self.teacher = Teacher()
 
