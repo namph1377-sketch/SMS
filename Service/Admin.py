@@ -1,6 +1,6 @@
 from Database.Connect import Database
 from Database.User import User
-from Database.ProfileStudent import ProfileStudent
+from Database.StudentProfile import StudentProfile
 from Database.Assignment import Assignment
 from Database.Log import Log
 from debug import debug
@@ -28,7 +28,7 @@ class Admin:
         user = User(student_id, student_id, student_id, None, "Stu", "1", 
                     full_name, date_of_birth, education_level, training_type, 
                     status, enrollment_date, specialization, course, class_id, None)
-        profile = ProfileStudent(student_id, None, None, personal_email, 
+        profile = StudentProfile(student_id, None, None, personal_email, 
                                  None, None, None, None, None, None, None, 
                                  None, None, None, None, None, None)
         user.add_user(self.db)
