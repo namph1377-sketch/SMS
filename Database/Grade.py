@@ -23,26 +23,6 @@ class Grade:
         self.Pass = Pass
         self.Notes = Notes
 
-    def add_grade(self, db):
-        query = """
-        INSERT INTO Grade
-        (CourseID, userID, CAscore, Finalscore, FinalGrade, GPA, LetterGrade, classification, Pass, Notes)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        """
-        params = (
-            self.CourseID,
-            self.userID,
-            self.CAscore,
-            self.Finalscore,
-            self.FinalGrade,
-            self.GPA,
-            self.LetterGrade,
-            self.classification,
-            self.Pass,
-            self.Notes,
-        )
-        return db.execute_query(query, params)
-
     def update_grade(self, db):
         query = """
         UPDATE Grade SET
