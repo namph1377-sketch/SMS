@@ -1,72 +1,85 @@
-import hashlib
+import re
+from datetime import datetime
 
-class StudentManagementSystem:
-    def hash_pw(self, password):
-        return hashlib.sha256(password.encode()).hexdigest()
+def debug_student_input():
+    # ===== SỐ ĐIỆN THOẠI =====
+    while True:
+        phone = input("Nhập số điện thoại: ").strip()
 
-    # TC01, TC02: Login
-    def login(self, username, password):
-        user = self.users.get(username)
-        if user and user["password"] == self.hash_pw(password):
-            return f"Login successful! Hiển thị MENU {user['role']}."
-        return "Incorrect login information, please try again!"
+        if phone.startswith("+84"):
+            phone = "0" + phone[3:]
 
-    # TC03, TC04: Forgot Password
-    def forgot_password(self, username, email, otp, new_pw, confirm_pw):
-        user = self.users.get(username)
-        if not user or user.get("email") != email:
-            return "Incorrect account or email!"
-        if otp != "123456": # Giả lập OTP đúng là 123456
-            return "Incorrect OTP code! / OTP code has expired!"
-        if new_pw != confirm_pw:
-            return "Mật khẩu không trùng khớp"
-        user["password"] = self.hash_pw(new_pw)
-        return "Password reset successful! Quay về trang đăng nhập"
+        phone = re.sub(r"\D", "", phone)
 
-    # TC05, TC07, TC08, TC09: View Info (SV)
-    def view_student_info(self, sid, info_type):
-        s = self.users.get(sid)
-        if info_type == "profile": return s # Read-only
-        if info_type == "academic": return {"class": s["class"], "dept": s["dept"]}
-        if info_type == "curriculum": return self.curriculums.get(s["dept"])
-        if info_type == "grades": return s["grades"]
+        if len(phone) != 10:
+            print(" SĐT phải đúng 10 chữ số!")
+            continue
+        break
 
-    # TC10, TC11: Change Password
-    def change_password(self, sid, old_pw, new_pw, confirm_pw):
-        user = self.users.get(sid)
-        if user["password"] != self.hash_pw(old_pw):
-            return "Mật khẩu cũ không đúng"
-        if new_pw != confirm_pw:
-            return "Mật khẩu xác nhận mới không trùng khớp với mật khẩu mới, vui lòng nhập lại."
-        user["password"] = self.hash_pw(new_pw)
-        return "SUCCESSFUL!"
+    # ===== HÀM NHẬP NGÀY (NGÀY-THÁNG-NĂM) =====
+    def input_date(msg):
+        while True:
+            d = input(msg).strip().replace("/", "-").replace(".", "-")
+            try:
+                if re.match(r"\d{2}-\d{2}-\d{4}", d):
+                    return datetime.strptime(d, "%d-%m-%Y")
+                elif re.match(r"\d{4}-\d{2}-\d{2}", d):
+                    return datetime.strptime(d, "%Y-%m-%d")
+                else:
+                    raise ValueError
+            except ValueError:
+                print(" Ngày không đúng định dạng (DD-MM-YYYY hoặc YYYY-MM-DD)!")
 
-    # TC12, TC13, TC14: Lecturer (GV)
-    def gv_update_grade(self, gv_id, course_id, student_id, new_ca, new_final):
-        if student_id in self.users:
-            self.users[student_id]["grades"][course_id] = {"CA": new_ca, "Final": new_final}
-            return "UPDATE SUCCESSFUL! Điểm được cập nhật."
-        return "Failed"
+    # ===== NGÀY SINH & NGÀY NHẬP HỌC (>=18 TUỔI) =====
+    ngay_sinh = input_date("Nhập ngày sinh: ")
+    ngay_nhap_hoc = input_date("Nhập ngày nhập học: ")
 
-    # TC15, TC16, TC17, TC18, TC19: Admin
-    def admin_action(self, action, data):
-        if action == "create":
-            sid = data["citizen_id"]
-            if sid in self.users: return "Duplicated ID"
-            self.users[sid] = {**data, "password": self.hash_pw(sid), "role": "SV"}
-            return "SUCCESSFUL SAVE!"
-        if action == "search":
-            kw = data.lower()
-            return [u for k, u in self.users.items() if kw in k or kw in u.get("name", "").lower()]
-        if action == "filter":
-            return [u for u in self.users.values() if u.get("dept") == data["dept"] and u.get("status") == data["status"]]
-        if action == "delete":
-            if data in self.users:
-                self.users[data]["status"] = "Deactivated" # Soft delete
-                return "SUCCESSFUL DELETE!"
-        return "Error"
+    while True:
+        if ngay_sinh > ngay_nhap_hoc:
+            print(" Ngày sinh không được sau ngày nhập học!")
+        else:
+            age = ngay_nhap_hoc.year - ngay_sinh.year
+            if (ngay_nhap_hoc.month, ngay_nhap_hoc.day) < (ngay_sinh.month, ngay_sinh.day):
+                age -= 1
 
-    # TC20: Logout
-    def logout(self):
-        return "Redirecting to login..."
+            if age < 18:
+                print(" Sinh viên phải đủ 18 tuổi mới được nhập học!")
+            else:
+                break
 
+        ngay_sinh = input_date("Nhập lại ngày sinh: ")
+        ngay_nhap_hoc = input_date("Nhập lại ngày nhập học: ")
+
+    # ===== NGÀY VÀO ĐỘI / ĐOÀN =====
+    ngay_vao_doi = input_date("Nhập ngày vào Đội: ")
+    ngay_vao_doan = input_date("Nhập ngày vào Đoàn: ")
+
+    while ngay_vao_doan < ngay_vao_doi:
+        print(" Ngày vào Đoàn không được trước ngày vào Đội!")
+        ngay_vao_doi = input_date("Nhập lại ngày vào Đội: ")
+        ngay_vao_doan = input_date("Nhập lại ngày vào Đoàn: ")
+
+    # ===== ĐIỂM CA & FINAL =====
+    def input_score(msg):
+        while True:
+            try:
+                score = float(input(msg))
+                if score < 0 or score > 10:
+                    print(" Điểm phải nằm trong khoảng 0 – 10!")
+                    continue
+                return score
+            except ValueError:
+                print(" Điểm phải là số!")
+
+    ca_score = input_score("Nhập điểm CA: ")
+    final_score = input_score("Nhập điểm Final: ")
+
+    return {
+        "phone": phone,
+        "ngay_sinh": ngay_sinh.strftime("%Y-%m-%d"),
+        "ngay_nhap_hoc": ngay_nhap_hoc.strftime("%Y-%m-%d"),
+        "ngay_vao_doi": ngay_vao_doi.strftime("%Y-%m-%d"),
+        "ngay_vao_doan": ngay_vao_doan.strftime("%Y-%m-%d"),
+        "ca_score": ca_score,
+        "final_score": final_score
+    }
