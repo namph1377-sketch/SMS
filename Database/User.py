@@ -172,14 +172,37 @@ class User:
     @staticmethod
     def search_user_by_ID(db, userID):
         """
-        Ngoài những thông tin cơ bản cần Select,
-        Hãy lấy thêm những thông tin sau: Role, isActive
+        JOIN: User + AcademicClass + Major + Department + StudentProfile
+        Ngoài thông tin cơ bản, lấy thêm: Role, isActive
         """
         query = """
-        SELECT userID, username, fullName, email, Role, isActive, dateofBirth, ClassID, curriculumID, CourseID
-        FROM `User`
-        WHERE userID = %s
-        """
+                SELECT u.userID, 
+                       u.username, 
+                       u.fullName, 
+                       u.email, 
+                       u.Role, 
+                       u.isActive, 
+                       u.dateofBirth, 
+                       u.ClassID, 
+                       u.curriculumID, 
+                       u.CourseID, 
+                       c.ClassName, 
+                       m.MajorID, 
+                       m.MajorName, 
+                       d.departmentID, 
+                       d.DepartmentName, 
+                       sp.phone, 
+                       sp.personalEmail, 
+                       sp.gender, 
+                       sp.Nationality, 
+                       sp.hometown
+                FROM `User` u
+                         LEFT JOIN AcademicClass c ON u.ClassID = c.ClassID
+                         LEFT JOIN Major m ON c.MajorID = m.MajorID
+                         LEFT JOIN Department d ON m.departmentID = d.departmentID
+                         LEFT JOIN StudentProfile sp ON u.userID = sp.userID
+                WHERE u.userID = %s 
+                """
         r = db.fetch_one(query, (userID,))
         if not r:
             return None
@@ -195,15 +218,53 @@ class User:
             "ClassID": r[7],
             "curriculumID": r[8],
             "CourseID": r[9],
+            "class": {"ClassID": r[7], "ClassName": r[10]},
+            "major": {"MajorID": r[11], "MajorName": r[12]},
+            "department": {"departmentID": r[13], "DepartmentName": r[14]},
+            "profile": {
+                "phone": r[15],
+                "personalEmail": r[16],
+                "gender": r[17],
+                "Nationality": r[18],
+                "hometown": r[19],
+            },
         }
 
     @staticmethod
     def search_user_by_Name(db, fullName):
-        query = """
-        SELECT userID, username, fullName, email, Role, isActive, dateofBirth, ClassID, curriculumID, CourseID
-        FROM `User`
-        WHERE fullName LIKE %s
         """
+        JOIN: User + AcademicClass + Major + Department + StudentProfile
+        Tìm theo LIKE %fullName%
+        Trả về list dict
+        """
+        query = """
+                SELECT u.userID, 
+                       u.username, 
+                       u.fullName, 
+                       u.email, 
+                       u.Role,
+                       u.isActive, 
+                       u.dateofBirth, 
+                       u.ClassID, 
+                       u.curriculumID, 
+                       u.CourseID, 
+                       c.ClassName, 
+                       m.MajorID, 
+                       m.MajorName, 
+                       d.departmentID, 
+                       d.DepartmentName, 
+                       sp.phone, 
+                       sp.personalEmail, 
+                       sp.gender, 
+                       sp.Nationality, 
+                       sp.hometown
+                FROM `User` u
+                         LEFT JOIN AcademicClass c ON u.ClassID = c.ClassID
+                         LEFT JOIN Major m ON c.MajorID = m.MajorID
+                         LEFT JOIN Department d ON m.departmentID = d.departmentID
+                         LEFT JOIN StudentProfile sp ON u.userID = sp.userID
+                WHERE u.fullName LIKE %s 
+                """
         rows = db.fetch_all(query, (f"%{fullName}%",))
         result = []
         for r in rows:
@@ -218,9 +279,18 @@ class User:
                 "ClassID": r[7],
                 "curriculumID": r[8],
                 "CourseID": r[9],
+                "class": {"ClassID": r[7], "ClassName": r[10]},
+                "major": {"MajorID": r[11], "MajorName": r[12]},
+                "department": {"departmentID": r[13], "DepartmentName": r[14]},
+                "profile": {
+                    "phone": r[15],
+                    "personalEmail": r[16],
+                    "gender": r[17],
+                    "Nationality": r[18],
+                    "hometown": r[19],
+                },
             })
         return result
-
     @staticmethod
     def search_user_by_filler(db, DepartmentID=None, ClassID=None, status=None):
         """
