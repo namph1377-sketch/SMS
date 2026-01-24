@@ -2,9 +2,9 @@ import re
 from datetime import datetime
 
 def debug_student_input():
-    # ===== SỐ ĐIỆN THOẠI =====
+    # ===== PHONE NUMBER =====
     while True:
-        phone = input("Nhập số điện thoại: ").strip()
+        phone = input("Enter phone number: ").strip()
 
         if phone.startswith("+84"):
             phone = "0" + phone[3:]
@@ -12,11 +12,11 @@ def debug_student_input():
         phone = re.sub(r"\D", "", phone)
 
         if len(phone) != 10:
-            print(" SĐT phải đúng 10 chữ số!")
+            print(" Phone number must contain exactly 10 digits!")
             continue
         break
 
-    # ===== HÀM NHẬP NGÀY (NGÀY-THÁNG-NĂM) =====
+    # ===== DATE INPUT FUNCTION =====
     def input_date(msg):
         while True:
             d = input(msg).strip().replace("/", "-").replace(".", "-")
@@ -28,58 +28,58 @@ def debug_student_input():
                 else:
                     raise ValueError
             except ValueError:
-                print(" Ngày không đúng định dạng (DD-MM-YYYY hoặc YYYY-MM-DD)!")
+                print(" Invalid date format!")
 
-    # ===== NGÀY SINH & NGÀY NHẬP HỌC (>=18 TUỔI) =====
-    ngay_sinh = input_date("Nhập ngày sinh: ")
-    ngay_nhap_hoc = input_date("Nhập ngày nhập học: ")
+    # ===== DATE OF BIRTH & ENROLLMENT DATE (>=18 YEARS OLD) =====
+    dateOfBirth = input_date("Enter date of birth: ")
+    enrollmentDate = input_date("Enter enrollment date: ")
 
     while True:
-        if ngay_sinh > ngay_nhap_hoc:
-            print(" Ngày sinh không được sau ngày nhập học!")
+        if dateOfBirth > enrollmentDate:
+            print(" Date of birth cannot be after enrollment date!")
         else:
-            age = ngay_nhap_hoc.year - ngay_sinh.year
-            if (ngay_nhap_hoc.month, ngay_nhap_hoc.day) < (ngay_sinh.month, ngay_sinh.day):
+            age = enrollmentDate.year - dateOfBirth.year
+            if (enrollmentDate.month, enrollmentDate.day) < (dateOfBirth.month, dateOfBirth.day):
                 age -= 1
 
             if age < 18:
-                print(" Sinh viên phải đủ 18 tuổi mới được nhập học!")
+                print(" Student must be at least 18 years old to enroll!")
             else:
                 break
 
-        ngay_sinh = input_date("Nhập lại ngày sinh: ")
-        ngay_nhap_hoc = input_date("Nhập lại ngày nhập học: ")
+        dateOfBirth = input_date("Re-enter date of birth: ")
+        enrollmentDate = input_date("Re-enter enrollment date: ")
 
-    # ===== NGÀY VÀO ĐỘI / ĐOÀN =====
-    ngay_vao_doi = input_date("Nhập ngày vào Đội: ")
-    ngay_vao_doan = input_date("Nhập ngày vào Đoàn: ")
+    # ===== UNION & PARTY DATES =====
+    joinUnionDate = input_date("Enter Union join date: ")
+    joinPartyDate = input_date("Enter Party join date: ")
 
-    while ngay_vao_doan < ngay_vao_doi:
-        print(" Ngày vào Đoàn không được trước ngày vào Đội!")
-        ngay_vao_doi = input_date("Nhập lại ngày vào Đội: ")
-        ngay_vao_doan = input_date("Nhập lại ngày vào Đoàn: ")
+    while joinPartyDate < joinUnionDate:
+        print(" Party join date cannot be earlier than Union join date!")
+        joinUnionDate = input_date("Re-enter Union join date: ")
+        joinPartyDate = input_date("Re-enter Party join date: ")
 
-    # ===== ĐIỂM CA & FINAL =====
+    # ===== SCORES =====
     def input_score(msg):
         while True:
             try:
                 score = float(input(msg))
                 if score < 0 or score > 10:
-                    print(" Điểm phải nằm trong khoảng 0 – 10!")
+                    print(" Score must be between 0 and 10!")
                     continue
                 return score
             except ValueError:
-                print(" Điểm phải là số!")
+                print(" Score must be a number!")
 
-    ca_score = input_score("Nhập điểm CA: ")
-    final_score = input_score("Nhập điểm Final: ")
+    caScore = input_score("Enter CA score: ")
+    finalScore = input_score("Enter Final score: ")
 
     return {
         "phone": phone,
-        "ngay_sinh": ngay_sinh.strftime("%Y-%m-%d"),
-        "ngay_nhap_hoc": ngay_nhap_hoc.strftime("%Y-%m-%d"),
-        "ngay_vao_doi": ngay_vao_doi.strftime("%Y-%m-%d"),
-        "ngay_vao_doan": ngay_vao_doan.strftime("%Y-%m-%d"),
-        "ca_score": ca_score,
-        "final_score": final_score
+        "dateOfBirth": dateOfBirth.strftime("%Y-%m-%d"),
+        "enrollmentDate": enrollmentDate.strftime("%Y-%m-%d"),
+        "joinUnionDate": joinUnionDate.strftime("%Y-%m-%d"),
+        "joinPartyDate": joinPartyDate.strftime("%Y-%m-%d"),
+        "caScore": caScore,
+        "finalScore": finalScore
     }
