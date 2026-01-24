@@ -1,86 +1,66 @@
 import re
+
+def validate_phone(phone: str):
+    if not phone:
+        return None, "Phone number is required"
+
+    phone = phone.strip()
+
+    if phone.startswith("+84"):
+        phone = "0" + phone[3:]
+
+    phone = re.sub(r"\D", "", phone)
+
+    if len(phone) != 10:
+        return None, "Phone number must contain exactly 10 digits"
+
+    return phone, None
+    ######## Kiêm tra ngay#####
 from datetime import datetime
+import re
+def debug_date(date_str):
+    if date_str is None or date_str.strip() == "":
+        return None, "Date is required"
 
-def debug_student_input():
-    # ===== Kiem tra sdt =====
-    while True:
-        phone = input("Enter phone number: ").strip()
+    d = date_str.strip().replace("/", "-").replace(".", "-")
 
-        if phone.startswith("+84"):
-            phone = "0" + phone[3:]
-
-        phone = re.sub(r"\D", "", phone)
-
-        if len(phone) != 10:
-            print(" Phone number must contain exactly 10 digits!")
-            continue
-        break
-
-    # ===== kiem tra cac ngay =====
-    def input_date(msg):
-        while True:
-            d = input(msg).strip().replace("/", "-").replace(".", "-")
-            try:
-                if re.match(r"\d{2}-\d{2}-\d{4}", d):
-                    return datetime.strptime(d, "%d-%m-%Y")
-                elif re.match(r"\d{4}-\d{2}-\d{2}", d):
-                    return datetime.strptime(d, "%Y-%m-%d")
-                else:
-                    raise ValueError
-            except ValueError:
-                print(" Invalid date format!")
-
-    # ===== nay sinh va nhap hoc(>=18 YEARS OLD) =====
-    dateOfBirth = input_date("Enter date of birth: ")
-    enrollmentDate = input_date("Enter enrollment date: ")
-
-    while True:
-        if dateOfBirth > enrollmentDate:
-            print(" Date of birth cannot be after enrollment date!")
+    try:
+        if re.match(r"\d{2}-\d{2}-\d{4}", d):
+            return datetime.strptime(d, "%d-%m-%Y"), None
+        elif re.match(r"\d{4}-\d{2}-\d{2}", d):
+            return datetime.strptime(d, "%Y-%m-%d"), None
         else:
-            age = enrollmentDate.year - dateOfBirth.year
-            if (enrollmentDate.month, enrollmentDate.day) < (dateOfBirth.month, dateOfBirth.day):
-                age -= 1
+            return None, "Invalid date format"
+    except ValueError:
+        return None, "Invalid date value"
+#########kiem tra ngay sinh ngay nhap hc ####
+def debug_age(dateOfBirth, enrollmentDate):
+    if dateOfBirth > enrollmentDate:
+        return False, "Date of birth cannot be after enrollment date"
 
-            if age < 18:
-                print(" Student must be at least 18 years old to enroll!")
-            else:
-                break
+    age = enrollmentDate.year - dateOfBirth.year
+    if (enrollmentDate.month, enrollmentDate.day) < (dateOfBirth.month, dateOfBirth.day):
+        age -= 1
 
-        dateOfBirth = input_date("Re-enter date of birth: ")
-        enrollmentDate = input_date("Re-enter enrollment date: ")
+    if age < 18:
+        return False, "Student must be at least 18 years old"
 
-    # ===== ngay gia nhap doan va dang =====
-    joinUnionDate = input_date("Enter Union join date: ")
-    joinPartyDate = input_date("Enter Party join date: ")
+    return True, None
+###### kiem tra ngay nhap doan, dang
+def debug_join_dates(joinUnionDate, joinPartyDate):
+    if joinPartyDate < joinUnionDate:
+        return False, "Party join date cannot be earlier than Union join date"
+    return True, None
+####### kiem tra dim Ca score va final score chung
+def debug_score(score):
+    if score is None or str(score).strip() == "":
+        return None, "Score is required"
+    try:
+        score = float(score)
+    except ValueError:
+        return None, "Score must be a number"
 
-    while joinPartyDate < joinUnionDate:
-        print(" Party join date cannot be earlier than Union join date!")
-        joinUnionDate = input_date("Re-enter Union join date: ")
-        joinPartyDate = input_date("Re-enter Party join date: ")
+    if score < 0 or score > 10:
+        return None, "Score must be between 0 and 10"
 
-    # ===== diem =====
-    def input_score(msg):
-        while True:
-            try:
-                score = float(input(msg))
-                if score < 0 or score > 10:
-                    print(" Score must be between 0 and 10!")
-                    continue
-                return score
-            except ValueError:
-                print(" Score must be a number!")
-
-    caScore = input_score("Enter CA score: ")
-    finalScore = input_score("Enter Final score: ")
-
-    return {
-        "phone": phone,
-        "dateOfBirth": dateOfBirth.strftime("%Y-%m-%d"),
-        "enrollmentDate": enrollmentDate.strftime("%Y-%m-%d"),
-        "joinUnionDate": joinUnionDate.strftime("%Y-%m-%d"),
-        "joinPartyDate": joinPartyDate.strftime("%Y-%m-%d"),
-        "caScore": caScore,
-        "finalScore": finalScore
-    }
-
+    return score, None
