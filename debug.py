@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 
 def debug_student_input():
-    # ===== PHONE NUMBER =====
+    # ===== Kiem tra sdt =====
     while True:
         phone = input("Enter phone number: ").strip()
 
@@ -16,7 +16,7 @@ def debug_student_input():
             continue
         break
 
-    # ===== DATE INPUT FUNCTION =====
+    # ===== kiem tra cac ngay =====
     def input_date(msg):
         while True:
             d = input(msg).strip().replace("/", "-").replace(".", "-")
@@ -30,7 +30,7 @@ def debug_student_input():
             except ValueError:
                 print(" Invalid date format!")
 
-    # ===== DATE OF BIRTH & ENROLLMENT DATE (>=18 YEARS OLD) =====
+    # ===== nay sinh va nhap hoc(>=18 YEARS OLD) =====
     dateOfBirth = input_date("Enter date of birth: ")
     enrollmentDate = input_date("Enter enrollment date: ")
 
@@ -50,7 +50,7 @@ def debug_student_input():
         dateOfBirth = input_date("Re-enter date of birth: ")
         enrollmentDate = input_date("Re-enter enrollment date: ")
 
-    # ===== UNION & PARTY DATES =====
+    # ===== ngay gia nhap doan va dang =====
     joinUnionDate = input_date("Enter Union join date: ")
     joinPartyDate = input_date("Enter Party join date: ")
 
@@ -59,7 +59,7 @@ def debug_student_input():
         joinUnionDate = input_date("Re-enter Union join date: ")
         joinPartyDate = input_date("Re-enter Party join date: ")
 
-    # ===== SCORES =====
+    # ===== diem =====
     def input_score(msg):
         while True:
             try:
@@ -83,3 +83,4 @@ def debug_student_input():
         "caScore": caScore,
         "finalScore": finalScore
     }
+
