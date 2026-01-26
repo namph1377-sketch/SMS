@@ -23,6 +23,11 @@ class Grade:
         self.Pass = Pass
         self.Notes = Notes
 
+    @staticmethod
+    def add_student(db, CourseID, userID):
+        query = "INSERT INTO Grade (CourseID, userID) VALUES (%s, %s)"
+        return db.execute(query, (CourseID, userID))
+
     def update_grade(self, db):
         query = """
         UPDATE Grade SET
@@ -48,7 +53,7 @@ class Grade:
             self.CourseID,
             self.userID,
         )
-        return db.execute_query(query, params)
+        return db.execute(query, params)
 
     @staticmethod
     def get_all_information(db):
@@ -114,3 +119,20 @@ class Grade:
                 }
             })
         return result
+
+    @staticmethod
+    def get_grade(db, CourseID, userID):
+        query = """
+        SELECT CAscore, Finalscore, Notes
+        FROM Grade
+        WHERE CourseID = %s AND userID = %s
+        """
+        row = db.fetch_one(query, (CourseID, userID))
+        if not row:
+            return None
+
+        return {
+            "CAscore": row[0],
+            "Finalscore": row[1],
+            "Notes": row[2]
+        }
