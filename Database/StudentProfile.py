@@ -67,7 +67,7 @@ class StudentProfile:
             self.gender,
             self.bankAccount,
         )
-        return db.execute_query(query, params)
+        return db.execute(query, params)
 
     def update_student_profile(self, db):
         query = """
@@ -109,9 +109,43 @@ class StudentProfile:
             self.bankAccount,
             self.userID,
         )
-        return db.execute_query(query, params)
+        return db.execute(query, params)
 
     @staticmethod
     def delete_student_profile(db, userID):
         query = "DELETE FROM StudentProfile WHERE userID=%s"
-        return db.execute_query(query, (userID,))
+        return db.execute(query, (userID,))
+    @staticmethod
+    def get_by_student_id(db, userID):
+        query = "SELECT * FROM StudentProfile WHERE userID=%s"
+        result = db.execute_query_fetchone(query, (userID,))
+        if result:
+            return StudentProfile(
+                userID=result["userID"],
+                phone=result["phone"],
+                emergencyPhone=result["emergencyPhone"],
+                personalEmail=result["personalEmail"],
+                ethnicity=result["ethnicity"],
+                religion=result["religion"],
+                Nationality=result["Nationality"],
+                joinUnionDate=result["joinUnionDate"],
+                joinPartyDate=result["joinPartyDate"],
+                nationalId=result["nationalId"],
+                insuranceCode=result["insuranceCode"],
+                initialHospital=result["initialHospital"],
+                placeOfBirth=result["placeOfBirth"],
+                hometown=result["hometown"],
+                permanentResidence=result["permanentResidence"],
+                gender=result["gender"],
+                bankAccount=result["bankAccount"],
+            )
+        return None
+    @staticmethod
+    def get_email_by_user_id(db, user_id):
+        query = """
+            SELECT personalEmail
+            FROM studentprofile 
+            WHERE userID = %s
+        """
+        result = db.fetch_one(query, (user_id,))
+        return result[0] if result else None
