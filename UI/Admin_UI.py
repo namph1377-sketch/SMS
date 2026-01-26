@@ -1,14 +1,17 @@
 from Service.Admin import Admin
-
+from UI.Auth_UI import UIAuth as Auth_UI
 
 class Admin_UI: 
+    def __init__(self, user):
+        self.user = user
+        self.admin = Admin(user["userID"])
 
     @staticmethod
-    def pause():
+    def pause(): 
         input("\nPress [Enter] to continue...")
 
-    def admin_menu():
-        admin = Admin()
+    def admin_menu(self, user): 
+        print(f"\nWelcome Admin: {user['username']}")
 
         while True:
             print("\n================= ADMIN MENU ================")
@@ -17,7 +20,7 @@ class Admin_UI:
             print("3. Update student profile")
             print("4. Delete student profile")
             print("5. Add course section to student")
-            print("6. Change your password")
+            print("6. Change password")
             print("7. Log out")
             print("============================================")
 
@@ -26,7 +29,7 @@ class Admin_UI:
             # 1. CREATE STUDENT
             if choice == "1":
                 print("\n------------- CREATE STUDENT ACCOUNT-------------")
-                admin.createStudent()
+                self.admin.createStudent()
                 Admin_UI.pause()
 
             # 2. VIEW STUDENT
@@ -40,9 +43,9 @@ class Admin_UI:
                     opt = input("Enter selection: ").strip()
 
                     if opt == "1":
-                        info = admin.searchStudent()
+                        info = self.admin.searchStudent()
                     elif opt == "2":
-                        info = admin.searchStudentByFilter()
+                        info = self.admin.searchStudentByFilter()
                     elif opt == "3":
                         break
                     else:
@@ -50,7 +53,7 @@ class Admin_UI:
                         continue
 
                     if info:
-                        admin.viewStudentDetail(info)
+                        self.admin.viewStudentDetail(info)
                         Admin_UI.pause()
 
             # 3. UPDATE STUDENT
@@ -64,9 +67,9 @@ class Admin_UI:
                     opt = input("Enter selection: ").strip()
 
                     if opt == "1":
-                        info = admin.searchStudent()
+                        info = self.admin.searchStudent()
                     elif opt == "2":
-                        info = admin.searchStudentByFilter()
+                        info = self.admin.searchStudentByFilter()
                     elif opt == "3":
                         break
                     else:
@@ -74,7 +77,7 @@ class Admin_UI:
                         continue
 
                     if info:
-                        admin.updateStudent(info)
+                        self.admin.updateStudent(info)
                     Admin_UI.pause()
 
             # 4. DELETE STUDENT
@@ -88,9 +91,9 @@ class Admin_UI:
                     opt = input("Enter selection: ").strip()
 
                     if opt == "1":
-                        info = admin.searchStudent()
+                        info = self.admin.searchStudent()
                     elif opt == "2":
-                        info = admin.searchStudentByFilter()
+                        info = self.admin.searchStudentByFilter()
                     elif opt == "3":
                         break
                     else:
@@ -99,31 +102,43 @@ class Admin_UI:
                     
                     if info:
                         print("\n[VERIFY INFORMATION]")
-                        print(f"- Full name: {info.fullname}")
-                        print(f"- Student ID: {info.userID}")
-                        print(f"- Academic Class: {info.ClassID}")
-                        print(f"- Status: {info.status}")
+                        print(f"- Full name: {info['fullName']}")
+                        print(f"- Student ID: {info['userID']}")
+                        print(f"- Academic Class: {info['class']['ClassID']}")
+                        print(f"- Status: {info['status']}")
 
-                        confirm = input("\nAre you sure you want to delete?\n1. Delete\n2. Cancel\n=> ")
-                        if confirm == "1":
-                            admin.deleteStudent(info)
-                    Admin_UI.pause()
+                        while True:
+                            confirm = input("\nAre you sure you want to delete?\n1. Delete\n2. Cancel\n=> ")
+                            if confirm == "1":
+                                self.admin.deleteStudent(info)
+                                break
+                            elif confirm == "2":
+                                print("Deletion cancelled successfully")
+                                break
+                            else:
+                                print("Invalid choice")
+                                continue
+                        Admin_UI.pause()
 
             # 5. ADD COURSE
             elif choice == "5":
                 print("\n---------------- ADD COURSE FOR STUDENT ----------------")
-                admin.addCourse()
+                self.admin.addCourse()
                 Admin_UI.pause()
 
             # 6. CHANGE PASSWORD (placeholder)
             elif choice == "6":
-                print("Change password feature is not implemented yet.")
+                Auth_UI.ui_change_password(self.user)
                 Admin_UI.pause()
 
             # 7. LOG OUT
             elif choice == "7":
-                print("Logging out...")
-                break
+                confirm = input("Are you sure you want to log out of the system? (y/n): ").lower()
+                if confirm == "y":
+                    return True
 
+                print("Invalid selection")
+
+            # NHẬP KHÔNG PHẢI 1–7
             else:
-                print("Invalid selection!")
+                print("Invalid selection! Please choose a number from 1 to 7.")
