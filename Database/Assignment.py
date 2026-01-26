@@ -6,7 +6,7 @@ class Assignment:
 
     def add_assignment_for_student(self, db):
         query = "INSERT INTO Assignment (CourseID, userID) VALUES (%s, %s)"
-        return db.execute_query(query, (self.CourseID, self.userID))
+        return db.execute(query, (self.CourseID, self.userID))
 
     @staticmethod
     def get_all_information(db):
@@ -105,3 +105,12 @@ class Assignment:
             })
 
         return result
+
+    @staticmethod
+    def is_student_assigned(db, courseID, studentID):
+        query = """
+            SELECT 1
+            FROM Assignment
+            WHERE CourseID = %s AND userID = %s
+            """
+        return db.fetch_one(query, (courseID, studentID)) is not None
