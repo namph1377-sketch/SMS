@@ -1,23 +1,25 @@
+from Database.Connect import Database
+
+
 class User:
     def __init__(
-        self,
-        userID,
-        username,
-        password,
-        email,
-        Role,
-        isActive,
-        fullName,
-        dateofBirth,
-        educationLevel=None,
-        educationType=None,
-        status=None,
-        Admissiondate=None,
-        Specialization=None,
-        courseYear=None,
-        ClassID=None,
-        curriculumID=None,
-        CourseID=None,
+            self,
+            userID,
+            username,
+            password,
+            email,
+            Role,
+            isActive,
+            fullName,
+            dateofBirth,
+            educationLevel=None,
+            educationType=None,
+            status=None,
+            Admissiondate=None,
+            Specialization=None,
+            courseYear=None,
+            ClassID=None,
+            curriculumID=None,
     ):
         # required fields
         self.userID = userID
@@ -36,22 +38,19 @@ class User:
         self.Admissiondate = Admissiondate
         self.Specialization = Specialization
         self.courseYear = courseYear
-
         self.ClassID = ClassID
         self.curriculumID = curriculumID
-        self.CourseID = CourseID
-
 
     def add_user(self, db):
         query = """
-        INSERT INTO `User`
-        (userID, username, password, email, Role, isActive, fullName, dateofBirth,
-         educationLevel, educationType, status, Admissiondate, Specialization, courseYear,
-         ClassID, curriculumID, CourseID)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,
-                %s,%s,%s,%s,%s,%s,
-                %s,%s,%s)
-        """
+                INSERT INTO `User`
+                (userID, username, password, email, Role, isActive, fullName, dateofBirth,
+                 educationLevel, educationType, status, Admissiondate, Specialization, courseYear,
+                 ClassID, curriculumID)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s,
+                        %s, %s) 
+                """
         params = (
             self.userID,
             self.username,
@@ -69,73 +68,84 @@ class User:
             self.courseYear,
             self.ClassID,
             self.curriculumID,
-            self.CourseID,
         )
-        return db.execute_query(query, params)
+        return db.execute(query, params)
 
-    def update_user(self, db):
-        query = """
-        UPDATE `User` SET
-          username=%s,
-          password=%s,
-          email=%s,
-          Role=%s,
-          isActive=%s,
-          fullName=%s,
-          dateofBirth=%s,
-          educationLevel=%s,
-          educationType=%s,
-          status=%s,
-          Admissiondate=%s,
-          Specialization=%s,
-          courseYear=%s,
-          ClassID=%s,
-          curriculumID=%s,
-          CourseID=%s
-        WHERE userID=%s
+    @staticmethod
+    def update_student_profile(db, user_id, data: dict):
+        ALLOWED_COLUMNS = {
+            "email",
+            "fullName",
+            "dateofBirth",
+            "educationLevel",
+            "educationType",
+            "status",
+            "Admissiondate",
+            "Specialization",
+            "courseYear",
+            "ClassID",
+            "curriculumID"
+        }
+
+        set_clauses = []
+        values = []
+
+        for column, value in data.items():
+            if column in ALLOWED_COLUMNS and value is not None:
+                set_clauses.append(f"{column} = %s")
+                values.append(value)
+
+        if not set_clauses:
+            return False
+
+        sql = f"""
+            UPDATE `User`
+            SET {', '.join(set_clauses)}
+            WHERE userID = %s
         """
-        params = (
-            self.username,
-            self.password,
-            self.email,
-            self.Role,
-            self.isActive,
-            self.fullName,
-            self.dateofBirth,
-            self.educationLevel,
-            self.educationType,
-            self.status,
-            self.Admissiondate,
-            self.Specialization,
-            self.courseYear,
-            self.ClassID,
-            self.curriculumID,
-            self.CourseID,
-            self.userID,
-        )
-        return db.execute_query(query, params)
+
+        values.append(user_id)
+        return db.execute(sql, tuple(values))
 
     @staticmethod
     def delete_user(db, userID):
         query = "DELETE FROM `User` WHERE userID=%s"
-        return db.execute_query(query, (userID,))
+        return db.execute(query, (userID,))
+    
+    @staticmethod
+    def deactivate_account(db, user_id):
+        sql = "UPDATE `User` SET isActive = 0 WHERE userID = %s"
+        return db.execute(sql, (user_id,))
 
     # ------------- AUTH / ACCOUNT -------------
     @staticmethod
-    def find_by_email(db, email):
+    def find_by_username(db, username):
         """
-        Lấy thông tin user theo email (email là UNIQUE trong DB)
+        Lấy thông tin user theo username (username là UNIQUE trong DB)
         Trả về dict hoặc None
         """
         query = """
-        SELECT
-          userID, username, password, email, Role, isActive, fullName, dateofBirth,
-          educationLevel, educationType, status, Admissiondate, Specialization, courseYear,
-          ClassID, curriculumID, CourseID
-        FROM `User`
-        WHERE email=%s
-        """
-        row = db.fetch_one(query, (email,))
+                SELECT userID, 
+                       username, 
+                       password, 
+                       email, 
+                       Role, 
+                       isActive, 
+                       fullName, 
+                       dateofBirth, 
+                       educationLevel, 
+                       educationType, 
+                       status, 
+                       Admissiondate, 
+                       Specialization, 
+                       courseYear, 
+                       ClassID, 
+                       curriculumID
+                FROM `User`
+                WHERE username = %s 
+                """
+
+        row = db.fetch_one(query, (username,))
         if not row:
             return None
 
@@ -156,19 +166,58 @@ class User:
             "courseYear": row[13],
             "ClassID": row[14],
             "curriculumID": row[15],
-            "CourseID": row[16],
         }
 
     @staticmethod
-    def update_password(db, email, new_hashed_password):
+    def update_password(db, user_id, new_hashed_password):
         """
         Cập nhật password theo email
         new_hashed_password: mật khẩu đã được hash ở tầng service/controller
         """
-        query = "UPDATE `User` SET password=%s WHERE email=%s"
-        return db.execute_query(query, (new_hashed_password, email))
+        query = "UPDATE `User` SET password=%s WHERE userID=%s"
+        return db.execute(query, (new_hashed_password, user_id))
 
     # ------------- Searches & joins -------------
+    @staticmethod
+    def _map_user_row(r):
+        return {
+            "userID": r[0],
+            "fullName": r[1],
+            "username": r[2],
+            "email": r[3],
+            "Role": r[4],
+            "isActive": r[5],
+            "dateofBirth": r[6],
+            "educationLevel": r[7],
+            "educationType": r[8],
+            "status": r[9],
+            "Admissiondate": r[10],
+            "Specialization": r[11],
+            "courseYear": r[12],
+            "curriculumID": r[13],
+            "class": {"ClassID": r[14], "ClassName": r[15]},
+            "major": {"MajorID": r[16], "MajorName": r[17]},
+            "department": {"departmentID": r[18], "DepartmentName": r[19]},
+            "profile": {
+                "phone": r[20],
+                "emergencyPhone": r[21],
+                "personalEmail": r[22],
+                "ethnicity": r[23],
+                "religion": r[24],
+                "Nationality": r[25],
+                "joinUnionDate": r[26],
+                "joinPartyDate": r[27],
+                "nationalID": r[28],
+                "insuranceCode": r[29],
+                "initialHospital": r[30],
+                "placeOfBirth": r[31],
+                "hometown": r[32],
+                "permanentResidence": r[33],
+                "gender": r[34],
+                "bankAccount": r[35],
+            },
+        }
+
     @staticmethod
     def search_user_by_ID(db, userID):
         """
@@ -176,26 +225,42 @@ class User:
         Ngoài thông tin cơ bản, lấy thêm: Role, isActive
         """
         query = """
-                SELECT u.userID, 
-                       u.username, 
-                       u.fullName, 
-                       u.email, 
-                       u.Role, 
-                       u.isActive, 
-                       u.dateofBirth, 
-                       u.ClassID, 
-                       u.curriculumID, 
-                       u.CourseID, 
-                       c.ClassName, 
-                       m.MajorID, 
-                       m.MajorName, 
-                       d.departmentID, 
-                       d.DepartmentName, 
-                       sp.phone, 
-                       sp.personalEmail, 
-                       sp.gender, 
-                       sp.Nationality, 
-                       sp.hometown
+                SELECT u.userID,
+                       u.fullName,
+                       u.username,
+                       u.email,
+                       u.Role,
+                       u.isActive,
+                       u.dateofBirth,
+                       u.educationLevel,
+                       u.educationType,
+                       u.status,
+                       u.Admissiondate,
+                       u.Specialization,
+                       u.courseYear,
+                       u.curriculumID,
+                       u.ClassID,
+                       c.ClassName,
+                       m.MajorID,
+                       m.MajorName,
+                       d.departmentID,
+                       d.DepartmentName,
+                       sp.phone,
+                       sp.emergencyPhone,
+                       sp.personalEmail,
+                       sp.ethnicity,
+                       sp.religion,
+                       sp.Nationality,
+                       sp.joinUnionDate,
+                       sp.joinPartyDate,
+                       sp.nationalID,
+                       sp.insuranceCode,
+                       sp.initialHospital,
+                       sp.placeOfBirth,
+                       sp.hometown,
+                       sp.permanentResidence,
+                       sp.gender,
+                       sp.bankAccount
                 FROM `User` u
                          LEFT JOIN AcademicClass c ON u.ClassID = c.ClassID
                          LEFT JOIN Major m ON c.MajorID = m.MajorID
@@ -207,28 +272,8 @@ class User:
         if not r:
             return None
 
-        return {
-            "userID": r[0],
-            "username": r[1],
-            "fullName": r[2],
-            "email": r[3],
-            "Role": r[4],
-            "isActive": r[5],
-            "dateofBirth": r[6],
-            "ClassID": r[7],
-            "curriculumID": r[8],
-            "CourseID": r[9],
-            "class": {"ClassID": r[7], "ClassName": r[10]},
-            "major": {"MajorID": r[11], "MajorName": r[12]},
-            "department": {"departmentID": r[13], "DepartmentName": r[14]},
-            "profile": {
-                "phone": r[15],
-                "personalEmail": r[16],
-                "gender": r[17],
-                "Nationality": r[18],
-                "hometown": r[19],
-            },
-        }
+        return User._map_user_row(r)
+
 
     @staticmethod
     def search_user_by_Name(db, fullName):
@@ -238,26 +283,42 @@ class User:
         Trả về list dict
         """
         query = """
-                SELECT u.userID, 
-                       u.username, 
-                       u.fullName, 
-                       u.email, 
+                SELECT u.userID,
+                       u.fullName,
+                       u.username,
+                       u.email,
                        u.Role,
-                       u.isActive, 
-                       u.dateofBirth, 
-                       u.ClassID, 
-                       u.curriculumID, 
-                       u.CourseID, 
-                       c.ClassName, 
-                       m.MajorID, 
-                       m.MajorName, 
-                       d.departmentID, 
-                       d.DepartmentName, 
-                       sp.phone, 
-                       sp.personalEmail, 
-                       sp.gender, 
-                       sp.Nationality, 
-                       sp.hometown
+                       u.isActive,
+                       u.dateofBirth,
+                       u.educationLevel,
+                       u.educationType,
+                       u.status,
+                       u.Admissiondate,
+                       u.Specialization,
+                       u.courseYear,
+                       u.curriculumID,
+                       u.ClassID,
+                       c.ClassName,
+                       m.MajorID,
+                       m.MajorName,
+                       d.departmentID,
+                       d.DepartmentName,
+                       sp.phone,
+                       sp.emergencyPhone,
+                       sp.personalEmail,
+                       sp.ethnicity,
+                       sp.religion,
+                       sp.Nationality,
+                       sp.joinUnionDate,
+                       sp.joinPartyDate,
+                       sp.nationalID,
+                       sp.insuranceCode,
+                       sp.initialHospital,
+                       sp.placeOfBirth,
+                       sp.hometown,
+                       sp.permanentResidence,
+                       sp.gender,
+                       sp.bankAccount
                 FROM `User` u
                          LEFT JOIN AcademicClass c ON u.ClassID = c.ClassID
                          LEFT JOIN Major m ON c.MajorID = m.MajorID
@@ -265,59 +326,68 @@ class User:
                          LEFT JOIN StudentProfile sp ON u.userID = sp.userID
                 WHERE u.fullName LIKE %s 
                 """
+
         rows = db.fetch_all(query, (f"%{fullName}%",))
-        result = []
-        for r in rows:
-            result.append({
-                "userID": r[0],
-                "username": r[1],
-                "fullName": r[2],
-                "email": r[3],
-                "Role": r[4],
-                "isActive": r[5],
-                "dateofBirth": r[6],
-                "ClassID": r[7],
-                "curriculumID": r[8],
-                "CourseID": r[9],
-                "class": {"ClassID": r[7], "ClassName": r[10]},
-                "major": {"MajorID": r[11], "MajorName": r[12]},
-                "department": {"departmentID": r[13], "DepartmentName": r[14]},
-                "profile": {
-                    "phone": r[15],
-                    "personalEmail": r[16],
-                    "gender": r[17],
-                    "Nationality": r[18],
-                    "hometown": r[19],
-                },
-            })
-        return result
+        return [User._map_user_row(r) for r in rows]
+
     @staticmethod
-    def search_user_by_filler(db, DepartmentID=None, ClassID=None, status=None):
+    def search_user_by_filter(db, DepartmentName=None, ClassName=None, status=None):
         """
         Dùng lệnh "join" giữa các bảng
         + Có thể để trống điều kiện xét
         """
         base_sql = """
-        SELECT
-          u.userID, u.username, u.fullName, u.email, u.Role, u.isActive,
-          c.ClassID, c.ClassName,
-          m.MajorID, m.MajorName,
-          d.departmentID, d.DepartmentName,
-          u.status
-        FROM `User` u
-        LEFT JOIN AcademicClass c ON u.ClassID = c.ClassID
-        LEFT JOIN Major m ON c.MajorID = m.MajorID
-        LEFT JOIN Department d ON m.departmentID = d.departmentID
-        """
+                SELECT u.userID,
+                       u.fullName,
+                       u.username,
+                       u.email,
+                       u.Role,
+                       u.isActive,
+                       u.dateofBirth,
+                       u.educationLevel,
+                       u.educationType,
+                       u.status,
+                       u.Admissiondate,
+                       u.Specialization,
+                       u.courseYear,
+                       u.curriculumID,
+                       u.ClassID,
+                       c.ClassName,
+                       m.MajorID,
+                       m.MajorName,
+                       d.departmentID,
+                       d.DepartmentName,
+                       sp.phone,
+                       sp.emergencyPhone,
+                       sp.personalEmail,
+                       sp.ethnicity,
+                       sp.religion,
+                       sp.Nationality,
+                       sp.joinUnionDate,
+                       sp.joinPartyDate,
+                       sp.nationalID,
+                       sp.insuranceCode,
+                       sp.initialHospital,
+                       sp.placeOfBirth,
+                       sp.hometown,
+                       sp.permanentResidence,
+                       sp.gender,
+                       sp.bankAccount
+                FROM `User` u
+                         LEFT JOIN AcademicClass c ON u.ClassID = c.ClassID
+                         LEFT JOIN Major m ON c.MajorID = m.MajorID
+                         LEFT JOIN Department d ON m.departmentID = d.departmentID
+                         LEFT JOIN StudentProfile sp ON u.userID = sp.userID
+                """
         where_clauses = []
         params = []
 
-        if DepartmentID:
-            where_clauses.append("d.departmentID = %s")
-            params.append(DepartmentID)
-        if ClassID:
-            where_clauses.append("c.ClassID = %s")
-            params.append(ClassID)
+        if DepartmentName:
+            where_clauses.append("d.DepartmentName LIKE %s")
+            params.append(f"%{DepartmentName}%")
+        if ClassName:
+            where_clauses.append("c.ClassName LIKE %s")
+            params.append(f"%{ClassName}%")
         if status:
             where_clauses.append("u.status = %s")
             params.append(status)
@@ -326,21 +396,8 @@ class User:
             base_sql += " WHERE " + " AND ".join(where_clauses)
 
         rows = db.fetch_all(base_sql, tuple(params))
-        out = []
-        for r in rows:
-            out.append({
-                "userID": r[0],
-                "username": r[1],
-                "fullName": r[2],
-                "email": r[3],
-                "Role": r[4],
-                "isActive": r[5],
-                "class": {"ClassID": r[6], "ClassName": r[7]},
-                "major": {"MajorID": r[8], "MajorName": r[9]},
-                "department": {"departmentID": r[10], "DepartmentName": r[11]},
-                "status": r[12],
-            })
-        return out
+        return [User._map_user_row(r) for r in rows]
+
 
     @staticmethod
     def get_all_academic_and_personal_information(db):
@@ -348,37 +405,67 @@ class User:
         Dùng lệnh "join" giữa các bảng
         """
         query = """
-        SELECT
-          u.userID, u.username, u.fullName, u.email, u.Role, u.isActive,
-          c.ClassID, c.ClassName,
-          m.MajorID, m.MajorName,
-          d.departmentID, d.DepartmentName,
-          sp.phone, sp.personalEmail, sp.gender, sp.Nationality, sp.hometown
-        FROM `User` u
-        LEFT JOIN AcademicClass c ON u.ClassID = c.ClassID
-        LEFT JOIN Major m ON c.MajorID = m.MajorID
-        LEFT JOIN Department d ON m.departmentID = d.departmentID
-        LEFT JOIN StudentProfile sp ON u.userID = sp.userID
-        """
+                SELECT u.userID,
+                       u.fullName,
+                       u.username,
+                       u.email,
+                       u.Role,
+                       u.isActive,
+                       u.dateofBirth,
+                       u.educationLevel,
+                       u.educationType,
+                       u.status,
+                       u.Admissiondate,
+                       u.Specialization,
+                       u.courseYear,
+                       u.curriculumID,
+                       u.ClassID,
+                       c.ClassName,
+                       m.MajorID,
+                       m.MajorName,
+                       d.departmentID,
+                       d.DepartmentName,
+                       sp.phone,
+                       sp.emergencyPhone,
+                       sp.personalEmail,
+                       sp.ethnicity,
+                       sp.religion,
+                       sp.Nationality,
+                       sp.joinUnionDate,
+                       sp.joinPartyDate,
+                       sp.nationalID,
+                       sp.insuranceCode,
+                       sp.initialHospital,
+                       sp.placeOfBirth,
+                       sp.hometown,
+                       sp.permanentResidence,
+                       sp.gender,
+                       sp.bankAccount
+                FROM `User` u
+                         LEFT JOIN AcademicClass c ON u.ClassID = c.ClassID
+                         LEFT JOIN Major m ON c.MajorID = m.MajorID
+                         LEFT JOIN Department d ON m.departmentID = d.departmentID
+                         LEFT JOIN StudentProfile sp ON u.userID = sp.userID
+                """
+
         rows = db.fetch_all(query)
-        result = []
-        for r in rows:
-            result.append({
-                "userID": r[0],
-                "username": r[1],
-                "fullName": r[2],
-                "email": r[3],
-                "Role": r[4],
-                "isActive": r[5],
-                "class": {"ClassID": r[6], "ClassName": r[7]},
-                "major": {"MajorID": r[8], "MajorName": r[9]},
-                "department": {"departmentID": r[10], "DepartmentName": r[11]},
-                "profile": {
-                    "phone": r[12],
-                    "personalEmail": r[13],
-                    "gender": r[14],
-                    "Nationality": r[15],
-                    "hometown": r[16],
-                },
-            })
-        return result
+        return [User._map_user_row(r) for r in rows]
+
+    @staticmethod
+    def search_user_by_personal_email(db, email):
+        query = """
+            SELECT sp.userID
+            FROM StudentProfile sp
+            WHERE sp.personalEmail = %s
+        """
+        return db.fetch_one(query, (email,))
+
+    @staticmethod
+    def find_by_email(db, username):
+        query = """
+            SELECT u.email
+            FROM User u
+            WHERE u.username = %s
+        """
+        return db.fetch_one(query, (username,))
+
