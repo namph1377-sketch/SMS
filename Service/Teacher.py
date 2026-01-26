@@ -3,13 +3,13 @@ from Database.Grade import Grade
 from Database.Course import Course
 from Database.Assignment import Assignment
 from Database.Log import Log
-from debug import debug
+#from debug import debug
 from datetime import datetime
 
 class Teacher:
-    def __init__(self):
+    def __init__(self, userID):
         self.db = Database()
-
+        self.userID = userID
     # Hàm ánh xạ giờ với ca
     def get_shift(self, hour, minute):
         time_in_minutes = hour * 60 + minute
@@ -26,15 +26,13 @@ class Teacher:
             if time_in_minutes in minutes:
                 return shift
         return None  
-        
     def ViewSchedule(self):
         schedules = Course.get_all_information(self.db)
 
         if not schedules:
             print("No schedule found")
             return
-        
-        # Thứ tự ngày trong tuần
+
         day_order = {
             "Monday": 1,
             "Tuesday": 2,
@@ -45,22 +43,35 @@ class Teacher:
             "Sunday": 7
         }
 
-        # Sắp xếp: theo ngày → theo ca
         schedule_sorted = sorted(
             schedules,
             key=lambda s: (
-                day_order.get(s.CourseTime.strftime("%A"), 99),
-                self.get_shift(s.CourseTime.hour, s.CourseTime.minute)
+                day_order.get(s["CourseTime"].strftime("%A"), 99),
+                self.get_shift(
+                    s["CourseTime"].hour,
+                    s["CourseTime"].minute
+                ) or 99
             )
         )
 
-        print(f"{'Day':<10} | {'Course Time':<12} | {'Subject':<20} | {'Course ID'}")
+        # header
+        print(f"{'Weekday':<10} | {'Shift':^12} | {'Subject':<35} | CourseID")
+        print("-" * 70)
 
         for s in schedule_sorted:
-            dt = s.CourseTime
+            dt = s["CourseTime"]
+
             weekday = dt.strftime("%A")
             shift = self.get_shift(dt.hour, dt.minute)
-            print(f"{weekday:<10} | {shift:^12} | {s.subjectName:<20} | {s.CourseID}")
+            shift = shift if shift is not None else "N/A"
+
+            subject_name = s["subject"]["subjectName"]
+
+            print(
+                f"{weekday:<10} | {shift:^12} | "
+                f"{subject_name:<35} | {s['CourseID']}"
+            )
+
 
     def searchbyCourseID(self):
         CourseID = input("Enter Course ID: ").strip()
@@ -78,26 +89,41 @@ class Teacher:
         except ValueError:
             pass
 
-        print("Lựa chọn không hợp lệ")
+        print("Invalid choice")
         return None
 
     def preView(self):
         sche = Course.get_all_information(self.db)
-        print(f"{'Course ID':<20} | {'SubjectName'}")
-        for s in sche:
-            print(f"{s.CourseID:<20} | {s.subjectName}")
 
-    def ViewStudentList(self, info: list[Assignment]):
+        print(f"{'Course ID':<20} | {'Subject Name'}")
+        print("-" * 45)
+
+        for s in sche:
+            subject_name = s["subject"]["subjectName"]
+            print(f"{s['CourseID']:<20} | {subject_name}")
+
+
+    def ViewStudentList(self, info: list[dict]):
         print(
-            f"{'No':<3} | {'Student ID':<12} | {'Fullname':<25} | {'CA Score':<10} | "
-            f"{'Final Score':<10} | {'Final grade':<10} | {'Notes'}"
+            f"{'No':<3} | {'Student ID':<12} | {'Fullname':<25} | "
+            f"{'CA Score':<10} | {'Final Score':<10} | {'Final grade':<10} | {'Notes'}"
         )
+
         for idx, g in enumerate(info, start=1):
+            user = g["user"]
+            grade = g["grade"] or {}
+
             print(
-            f"{idx:<3} | {g.userID:<12} | {g.fullname:<25} | {g.CAscore:<10} | "
-            f"{g.Finalscore:<10} | {g.FinalGrade:<10} | {g.Notes}"
-        )
-    
+                f"{idx:<3} | "
+                f"{user['userID']:<12} | "
+                f"{user['fullName']:<25} | "
+                f"{grade.get('CAscore', ''):<10} | "
+                f"{grade.get('Finalscore', ''):<10} | "
+                f"{grade.get('FinalGrade', ''):<10} | "
+                f"{grade.get('Notes', '')}"
+            )
+
+
     def calculate_grade(self, ca_score, final_score):
         final_grade = round(ca_score * 0.4 + final_score * 0.6, 2)
 
@@ -129,46 +155,101 @@ class Teacher:
 
     # Ngoài hàm cập nhật điểm thì cần hàm xem danh sách sinh viên + hàm để lưu thay đổi vào Log
     def addGrade(self, CourseID, userID):
-        try:
-            CAScore = float(input("Enter CA score: "))
-            Finalscore = float(input("Enter Final score: "))
-            if not (0 <= CAScore <= 10 and 0 <= Finalscore <= 10):
-                print("Điểm phải nằm trong khoảng 0–10")
-                return
-        except ValueError:
-            print("Điểm không hợp lệ")
-            return
+        # Lấy điểm cũ (nếu có)
+        old_grade = Grade.get_grade(self.db, CourseID, userID)
 
-        Notes = input("Enter a note: ").strip()
+        old_ca = old_grade["CAscore"] if old_grade else None
+        old_final = old_grade["Finalscore"] if old_grade else None
+        print("\n--- Update Grade ---")
+
+        print("(Press ENTER to keep current value, type 'q' to cancel)")
+
+        # ===== nhập CA score =====
+        while True:
+            raw = input("Enter CA score: ").strip()
+
+            if raw.lower() == "q":
+                print("Grade update cancelled")
+                return
+
+            if raw == "":
+                CAScore = old_ca
+                break
+
+            try:
+                CAScore = float(raw)
+                if 0 <= CAScore <= 10:
+                    break
+                print("Score must be between 0 and 10")
+            except ValueError:
+                print("Invalid score")
+
+        # ===== nhập Final score =====
+        while True:
+            raw = input("Enter Final score: ").strip()
+
+            if raw.lower() == "q":
+                print("Grade update cancelled")
+                return
+
+            if raw == "":
+                Finalscore = old_final
+                break
+
+            try:
+                Finalscore = float(raw)
+                if 0 <= Finalscore <= 10:
+                    break
+                print("Score must be between 0 and 10")
+            except ValueError:
+                print("Invalid score")
+
+        Notes = input("Enter note (Press ENTER to keep current value): ").strip()
+        if Notes == "" and old_grade:
+            Notes = old_grade.get("Notes", "")
+
+        # Nếu vẫn chưa có đủ điểm thì không cho lưu
+        if CAScore is None or Finalscore is None:
+            print("Not enough scores to calculate the result")
+            return
 
         FinalGrade, GPA, LetterGrade, classification, Pass = \
             self.calculate_grade(CAScore, Finalscore)
 
-        # Lưu DB
-        grade = Grade(CourseID, userID, CAScore, Finalscore, FinalGrade,
-                      GPA, LetterGrade, classification, Pass, Notes)
+        grade = Grade(
+            CourseID,
+            userID,
+            CAScore,
+            Finalscore,
+            FinalGrade,
+            GPA,
+            LetterGrade,
+            classification,
+            Pass,
+            Notes
+        )
+
         success = grade.update_grade(self.db)
 
         if success:
-            print("Cập nhật điểm thành công")
-
-            # Ghi log
+            print("Grade updated successfully")
             self.log(
                 "UPDATE",
-                "Student.Grade",
-                f"Updated FinalGrade to {grade.FinalGrade}",
-                "TEACHER"
+                "FinalGrade",
+                f"Updated FinalGrade to {FinalGrade}"
             )
+
         else:
-            print("Cập nhật điểm thất bại")
+            print("Failed to update grade")
 
-    def log(self, log_type, log_object, old_value, user_id):
-        LogType = log_type
-        LogObject = log_object
-        OldValue = old_value
-        ChangeAt = datetime.now()
-        userID = user_id
 
-        log = Log(None, LogType, LogObject, OldValue, ChangeAt, userID)
+    def log(self, LogType, LogObject, OldValue=None):
+        log = Log(
+            LogID=None,
+            LogType=LogType,
+            LogObject=LogObject,
+            OldValue=OldValue,
+            ChangeAt=datetime.now(),
+            userID=self.userID
+        )
         log.add_log(self.db)
-
