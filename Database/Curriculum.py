@@ -1,4 +1,3 @@
 class Curriculum:
-    def __init__(self, curriculumID, semester):
+    def __init__(self, curriculumID):
         self.curriculumID = curriculumID
-        self.semester = semester
