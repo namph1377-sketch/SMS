@@ -1,6 +1,7 @@
+from datetime import datetime
 import re
 
-def validate_phone(phone: str):
+def debug_phone(phone: str):
     if not phone:
         return None, "Phone number is required"
 
@@ -16,8 +17,6 @@ def validate_phone(phone: str):
 
     return phone, None
     ######## Kiêm tra ngay#####
-from datetime import datetime
-import re
 def debug_date(date_str):
     if date_str is None or date_str.strip() == "":
         return None, "Date is required"
@@ -33,34 +32,54 @@ def debug_date(date_str):
             return None, "Invalid date format"
     except ValueError:
         return None, "Invalid date value"
-#########kiem tra ngay sinh ngay nhap hc ####
-def debug_age(dateOfBirth, enrollmentDate):
-    if dateOfBirth > enrollmentDate:
-        return False, "Date of birth cannot be after enrollment date"
-
-    age = enrollmentDate.year - dateOfBirth.year
-    if (enrollmentDate.month, enrollmentDate.day) < (dateOfBirth.month, dateOfBirth.day):
-        age -= 1
-
-    if age < 18:
-        return False, "Student must be at least 18 years old"
-
-    return True, None
 ###### kiem tra ngay nhap doan, dang
-def debug_join_dates(joinUnionDate, joinPartyDate):
-    if joinPartyDate < joinUnionDate:
-        return False, "Party join date cannot be earlier than Union join date"
-    return True, None
-####### kiem tra dim Ca score va final score chung
-def debug_score(score):
-    if score is None or str(score).strip() == "":
-        return None, "Score is required"
-    try:
-        score = float(score)
-    except ValueError:
-        return None, "Score must be a number"
+def debug_citizen_id(citizen_id: str):
+    """
+    Citizen identification number:
+    - Chỉ cho phép đúng 12 chữ số
+    """
+    if not citizen_id:
+        print("ERROR: Citizen identification number cannot be empty")
+        return None
 
-    if score < 0 or score > 10:
-        return None, "Score must be between 0 and 10"
+    citizen_id = citizen_id.strip()
 
-    return score, None
+    if not citizen_id.isdigit():
+        print("ERROR: Citizen identification number must contain only digits")
+        return None
+
+    if len(citizen_id) != 12:
+        print("ERROR: Citizen identification number must contain exactly 12 digits")
+        return None
+
+    return citizen_id
+from datetime import datetime
+
+from datetime import datetime
+
+def validate_entry_date(team_date: str, union_date: str):
+    """
+    Kiểm tra thứ tự ngày:
+    - Ngày vào Đội < Ngày vào Đoàn
+    """
+    # cho phép bỏ trống
+    if not team_date or not union_date:
+        return True, None, None
+
+    team_dt, team_err = debug_date(team_date)
+    if team_err:
+        print("ERROR: Team date -", team_err)
+        return False, None, None
+
+    union_dt, union_err = debug_date(union_date)
+    if union_err:
+        print("ERROR: Union date -", union_err)
+        return False, None, None
+
+    if union_dt < team_dt:
+        print("ERROR: Youth Union entry date must be later than Team entry date")
+        return False, None, None
+
+    return True, team_dt, union_dt
+
+
