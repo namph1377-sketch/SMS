@@ -1,9 +1,22 @@
 from Service.Student import Student
+from UI.Auth_UI import UIAuth
+from debug import (
+    debug_phone,
+    debug_date,
+    debug_citizen_id,
+    validate_entry_date
+)
 
 
 class Student_UI:
     def __init__(self, user_id):
         self.student = Student(user_id)
+        profile = self.student.viewProfile()   # lấy thông tin user
+
+        self.user = {
+            "userID": user_id,
+            "username": profile["username"]     # BẮT BUỘC
+        }
 
     def run(self):
         while True:
@@ -38,7 +51,7 @@ class Student_UI:
 
             elif choice == "7":
                 if self.logout():
-                    break
+                    return True
             else:
                 print("Invalid selection!")
 
@@ -60,8 +73,10 @@ class Student_UI:
         print(f"- Date of birth        : {profile.get('date_of_birth','')}")
         print(f"- Education level      : {profile.get('education_level','')}")
         print(f"- Training type        : {profile.get('training_type','')}")
-        print(f"- Department             : {profile.get('department','')}")
-        print(f"- Major                : {profile.get('major','')}")
+        department = profile.get("department", {})
+        print(f"- Department           : {department.get('DepartmentName', '')}")
+        major = profile.get("major",{})
+        print(f"- Major                : {major.get('MajorName','')}")
         print(f"- Specialization       : {profile.get('specialization','')}")
         print(f"- Course               : {profile.get('course','')}")
         print(f"- Status               : {profile.get('status','')}")
@@ -106,18 +121,101 @@ class Student_UI:
         new_data = {}
 
         print("\nI. DETAILED PERSONAL INFORMATION")
-        phone = input("- Phone number         : ")
-        emergency = input("- Emergency contact    : ")
+        # ===== PHONE NUMBER =====
+        while True:
+            phone = input("- Phone number: ").strip()
+
+            if not phone:
+                break  # cho phép bỏ trống
+
+            phone_value, phone_error = debug_phone(phone)
+
+            if phone_error:
+                print("ERROR:", phone_error)
+                continue
+            else:
+                phone = phone_value
+                break
+
+        while True:
+            emergency = input("- Emergency contact    : ")
+
+            if not emergency:
+                break  # cho phép bỏ trống
+
+            emergency_value, emergency_error = debug_phone(emergency)
+
+            if emergency_error:
+                print("ERROR:", emergency_error)
+                continue
+            else:
+                emergency = emergency_value
+                break
+
         email = input("- Personal email       : ")
         ethnicity = input("- Ethnicity            : ")
         religion = input("- Religion             : ")
         nationality = input("- Nationality          : ")
-        youth_date = input("- Youth Union entry date: ")
-        party_date = input("- Party entry date     : ")
+        # ===== YOUTH UNION & PARTY ENTRY DATE =====
+        while True:
+            youth_date = None
+            party_date = None
+
+            youth_input = input("- Youth Union entry date: ").strip()
+            party_input = input("- Party entry date: ").strip()
+
+            # cho phép bỏ trống cả hai
+            if not youth_input and not party_input:
+                break
+
+            # nếu chỉ nhập 1 trong 2 → cho qua
+            if youth_input and not party_input:
+                youth_date = youth_input
+                break
+
+            if party_input and not youth_input:
+                party_date = party_input
+                break
+
+            # nếu cả hai đều có → kiểm tra thứ tự
+            check, youth_input, party_input = validate_entry_date(youth_input, party_input)
+            if not check:
+                print("Please re-enter both dates.\n")
+                continue
+            
+            youth_date = youth_input
+            party_date = party_input
+            break
 
         print("\nII. IDENTIFICATION & INSURANCE INFORMATION")
-        citizen_id = input("- Citizen identification number      : ")
-        issue_date = input("- Issue date           : ")
+        while True:
+            citizen_id = input("- Citizen identification number: ").strip()
+
+            if not citizen_id:
+                break
+
+            cid = debug_citizen_id(citizen_id)
+
+            if cid is None:
+                continue
+            else:
+                citizen_id = cid
+                break
+
+        while True:
+            issue_date = input("- Issue date: ").strip()
+
+            if not issue_date:
+                break
+
+            date_value, date_error = debug_date(issue_date)
+
+            if date_error:
+                print("ERROR:", date_error)
+                continue
+            else:
+                issue_date = date_value
+                break
         place_issue = input("- Place of issue       : ")
         health_id = input("- Health insurance ID  : ")
         medical_place = input("- Initial medical facility: ")
@@ -150,15 +248,30 @@ class Student_UI:
         }
 
         for k, v in fields.items():
-            if v.strip():
+            if v is None:
+                continue
+
+            if isinstance(v, str):
+                if v.strip():
+                    new_data[k] = v
+            else:
+                # datetime / int / kiểu khác
                 new_data[k] = v
+
 
         print("--------------------------------------------------------")
         input("Press [Enter] to continue")
 
-        self.student.updateProfile(new_data)
+        if new_data:
+            if self.student.updateProfile(new_data):
+                print("Personal information updated successfully")
+            else:
+                print("Failed to update personal information")
+        else:
+            print("No changes were made")
 
         print("Return to student menu")
+
 
     # ========== 3. VIEW CURRICULUM ==========
     def view_curriculum(self):
@@ -166,95 +279,110 @@ class Student_UI:
         print("                CURRICULUM FRAMEWORK")
         print("================================================")
 
-        curriculum = self.student.viewCurriculum()
+        curriculum = self.student.viewCurriculum()  # ← dict
 
-        if curriculum:
-            for semester in range(1, 9):
-                print(f"SEMESTER {semester}:")
-                subjects = curriculum.get(semester, [])
-                for s in subjects:
-                    print(
-                        f"- {s['course_id']} | {s['subject_name']} | {s['credits']}"
-                    )
-                print()
-        else:
-            for semester in range(1, 9):
-                print(f"SEMESTER {semester}:\n")
+        for semester in range(1, 9):
+            print(f"SEMESTER {semester}:")
+            subjects = curriculum.get(semester, [])
+            for s in subjects:
+                print(
+                    f"- {s['subjectID']} | "
+                    f"{s['subjectName']} | "
+                    f"{s['Credits']}"
+                )
+            print()
 
         input("Press [Enter] to continue")
         print("Return to student menu")
 
 
+
     # ========== 4. VIEW GRADES ==========
     def view_grades(self):
         print("---------------- View Grades---------------")
-        print("Select function 4")
 
         grades = self.student.viewGrade()
 
-        print("Number|Course ID|Subject | Credits|CA score|Final score|Final grade|GPA|Letter grade| Classification| Pass|Note")
+        print("No |CourseID |Subject         |Credits|CA |Final |FinalGrade|GPA |Letter |Classfication |Pass |Note")
 
-        if grades:
-            for i, g in enumerate(grades, start=1):
-                print(
-                    f"{i:<6} "
-                    f"{g['course_id']:<8} "
-                    f"{g['subject_name']:<15} "
-                    f"{g['credits']:<6} "
-                    f"{g['ca_score']:<15} "
-                    f"{g['final_score']:<17} "
-                    f"{g['final_grade']:<10} "
-                    f"{g['gpa']:<7} "
-                    f"{g['letter_grade']:<15} "
-                    f"{g['classification']:<15} "
-                    f"{g['pass']:<6} "
-                    f"{g.get('note','')}"
-                )
+        if not grades:
+            print("No grade data")
+            return
+
+        for i, g in enumerate(grades, start=1):
+            course = g["course"]
+            subject = course["subject"]
+            grade = g["grade"]
+
+            print(
+                f"{i:<3} "
+                f"{course['CourseID']:<9} "
+                f"{subject['subjectName']:<15} "
+                f"{subject['Credits']:<7} "
+                f"{grade['CAscore']:<4} "
+                f"{grade['Finalscore']:<6} "
+                f"{grade['FinalGrade']:<10} "
+                f"{grade['GPA']:<4} "
+                f"{grade['LetterGrade']:<7} "
+                f"{grade['classification']:<8} "
+                f"{grade['Pass']:<5} "
+                f"{grade['Notes'] or ''}"
+            )
 
         print("\nReturn to student menu")
 
 
 
+
     # ========== 5. VIEW SCHEDULE ==========
     def view_schedule(self):
-        print("--------------- View Schedule  -----------------")
-        print("Select function 5")
+        print("--------------- View Schedule -----------------")
 
-        schedule = self.student.ViewSchedule()
+        schedule = self.student.viewSchedule()
 
-        print("Day        |   Course time   |   Subject                  |   Course ID            |  Location")
+        print("CourseID | Course Time | Subject                      | Credits | Start                 | End         ")
 
-        if schedule:
-            for s in schedule:
-                print(
-                    f"{s['day']:<10}|"
-                    f"{s['course_time']:^17}|"
-                    f"{s['subject_name']:<26}|"
-                    f"{s['course_id']:^24}|"
-                    f"{s['location']:^10}"
-                )
+        if not schedule:
+            print("No schedule available")
+            return
+
+        for s in schedule:
+            subject = s["subject"]
+
+            course_time = s.get("CourseTime")
+
+            if course_time:
+                course_time = course_time.strftime("%H:%M")
+            else:
+                course_time = ""
+
+
+            start = s.get("Startdate", "")
+            end = s.get("Enddate", "")
+
+            print(
+                f"{s['CourseID']:<8} | "
+                f"{course_time:<6}      | "
+                f"{subject['subjectName']:<28} | "
+                f"{subject['Credits']:<7} | "
+                f"{start} | "
+                f"{end}"
+            )
 
         print("Return to student menu")
 
 
+
     # ========== 6. CHANGE PASSWORD ==========
     def change_password(self):
-        print("\n----- CHANGE PASSWORD -----")
-        current = input("Enter current password: ")
-        new = input("Enter new password     : ")
-        confirm = input("Confirm new password   : ")
-        input("Press [ENTER] to continue")
 
-        self.user.changePassword(current, new, confirm)
+        UIAuth.ui_change_password(self.user)
 
         print("Return to student menu")
 
     # ========== 7. LOGOUT ==========
     def logout(self):
-        print("\nAre you sure you want to log out of the system?")
-        confirm = input("Confirm (y/n): ")
+        confirm = input("Are you sure you want to log out of the system? (y/n): ").lower()
         if confirm.lower() == "y":
-            print("Logged out successfully")
-            print("Return to student management system")
-            return True
-        return False
+            return confirm
+        print("Invalid selection")
