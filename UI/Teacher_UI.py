@@ -5,8 +5,10 @@ from UI.Auth_UI import UIAuth
 
 
 class Teacher_UI:
-    def __init__(self):
-        self.teacher = Teacher()
+    def __init__(self, user):
+        self.user = user
+        self.teacher = Teacher(user["userID"])
+    
 
     def pause(self):
         input("\nPress [ENTER] to continue...")
@@ -15,19 +17,19 @@ class Teacher_UI:
         print("\n============= TEACHER MENU ===========")
         print("1. View teaching schedule")
         print("2. View student list by course")
-        print("3. Change your password")
+        print("3. Change password")
         print("4. Log out")
 
     # ====== FUNCTION 1 ======
     def view_schedule(self):
-        print("\n------------- View teaching schedule -------------")
+        print("\n------------- View teaching schedule ----------------------------------")
         self.teacher.ViewSchedule()
         self.pause()
 
     # ====== FUNCTION 2 ======
     def view_student_list_by_course(self):
         while True:
-            print("\n------------- View student list by course-------------")
+            print("\n------------- View student list by course--------------------------")
             print("List of course section")
             self.teacher.preView()
 
@@ -48,7 +50,7 @@ class Teacher_UI:
             )
 
             if not assignments:
-                print("No student found for this course")
+                print("No course found")
                 self.pause()
                 continue
 
@@ -62,10 +64,13 @@ class Teacher_UI:
                 self.pause()
                 continue
 
-            print(f"\nUpdating for: {student.fullname} ({student.userID})")
+            print(
+            f"\nUpdating for: {student['user']['fullName']} ({student['user']['userID']})")
+
 
             # cập nhật điểm
-            self.teacher.addGrade(student.CourseID, student.userID)
+            self.teacher.addGrade(student["CourseID"], student["user"]["userID"])
+
 
             # confirm quay lại
             self.pause()
@@ -73,11 +78,16 @@ class Teacher_UI:
 
     # ====== FUNCTION 3 ======
     def change_password(self):
-        UIAuth.ui_change_password()
+        UIAuth.ui_change_password(self.user)
+
 
     # ====== FUNCTION 4 ======
     def logout(self):
-        UIAuth.ui_logout()
+        confirm = input("Are you sure you want to log out of the system? (y/n): ").lower()
+        if confirm.lower() == "y":
+            return confirm
+        print("Invalid selection")
+        return UIAuth.ui_logout()        
 
     # ====== MAIN LOOP ======
     def run(self):
@@ -92,11 +102,8 @@ class Teacher_UI:
             elif choice == "3":
                 self.change_password()
             elif choice == "4":
-                confirm = input(
-                    "Are you sure you want to log out of the system? (y/n): "
-                ).lower()
-                if confirm == "y":
-                    print("Logged out successfully")
-                    return
+                return self.logout()
+
+
             else:
-                print("Invalid selection")
+                print("Invalid selection!")
